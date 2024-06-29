@@ -4,42 +4,22 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
-// for pipes:
-// write - 1
-// read  - 0
+void handler(int sig) {
+    printf("Interrupt handler has just been called\n");
+
+    signal(SIGINT, handler);
+}
+
 int main() {
-    pid_t pid;
-    int descriptor[2];
-    int data = 69;
-    char message[69] = "Mai mananc un peste proaspat";
-    char letter;
+    signal(SIGINT, handler);
 
-    pipe(descriptor);
-
-    if( (pid = fork()) < 0) {
-        fprintf(stderr, "Unable to create new process\n");
-        exit(1);
-    }
-
-    if(pid == 0) {
-        close(descriptor[1]);
-        while(data) {
-            data = read(descriptor[0], &letter, sizeof(char));
-            sleep(1);
-            printf("Letter read: %c\n", letter);
-        }
-    }
-    else {
-        close(descriptor[0]);
-        sleep(2);
-        
-        for(int i = 0; i < strnlen(message, 69); i++) {
-            write(descriptor[1], &message[i], 1);
-        }
-
-        close(descriptor[1]);
-        wait(0);
+    int i = 0;
+    while(i < 10) {
+        printf("ceau ceau\n");
+        sleep(1);
+        i++;
     }
 
     return 0;
