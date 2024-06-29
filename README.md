@@ -2,6 +2,9 @@
 ## 1. Processes
 - forks in bash?
 - processes in C
+- signals
+- handlers
+- pipes
 -
 
 ## 2. Thread parallelism (nonconcurrent)
@@ -11,7 +14,7 @@
 
 ## 3. Concurrency control elements
 - mutex, futex
-- traffic lights
+- semaphores
 - critical regions
 - reentrant locks
 -
