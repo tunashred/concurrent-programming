@@ -7,20 +7,24 @@
 #include <signal.h>
 
 void handler(int sig) {
-    printf("Interrupt handler has just been called\n");
-
-    signal(SIGINT, handler);
+    printf("Intorc pestele\n");
 }
 
 int main() {
-    signal(SIGINT, handler);
-
-    int i = 0;
-    while(i < 10) {
-        printf("ceau ceau\n");
-        sleep(1);
-        i++;
+    int pid;
+    if((pid = fork()) == 0) {
+        int status;
+        sleep(5);
+        kill(getppid(), SIGUSR1);
+        wait(&status);
     }
-
-    return 0;
+    else {
+        signal(SIGUSR1, handler);
+        int i = 0;
+        while(i < 10) {
+            sleep(1);
+            printf("Pestele se frige in tigaie\n");
+            i++;
+        }
+    }
 }
