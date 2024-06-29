@@ -6,14 +6,14 @@
 #include <string.h>
 
 // for pipes:
-// write - 0
-// read  - 1
+// write - 1
+// read  - 0
 int main() {
     pid_t pid;
     int descriptor[2];
-    int data;
-    char message[69] = "Azi mananc peste proaspat";
-    char buffer[420];
+    int data = 69;
+    char message[69] = "Mai mananc un peste proaspat";
+    char letter;
 
     pipe(descriptor);
 
@@ -24,14 +24,21 @@ int main() {
 
     if(pid == 0) {
         close(descriptor[1]);
-        data = read(descriptor[0], buffer, sizeof(buffer));
-        printf("Printing data value: %d\n", data);
-        printf("Message received from parent: %s\n", buffer);
+        while(data) {
+            data = read(descriptor[0], &letter, sizeof(char));
+            sleep(1);
+            printf("Letter read: %c\n", letter);
+        }
     }
     else {
         close(descriptor[0]);
         sleep(2);
-        write(descriptor[1], message, strlen(message) + 1);
+        
+        for(int i = 0; i < strnlen(message, 69); i++) {
+            write(descriptor[1], &message[i], 1);
+        }
+
+        close(descriptor[1]);
         wait(0);
     }
 
