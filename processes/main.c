@@ -7,16 +7,16 @@
 #include <signal.h>
 
 void handler(int sig) {
-    printf("Intorc pestele\n");
+    printf("S-a terminat butelia coaie\n");
+    exit(1);
 }
 
 int main() {
     int pid;
+
     if((pid = fork()) == 0) {
-        int status;
         sleep(5);
         kill(getppid(), SIGUSR1);
-        wait(&status);
     }
     else {
         signal(SIGUSR1, handler);
