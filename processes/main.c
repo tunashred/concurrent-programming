@@ -1,24 +1,15 @@
-#include <bits/types/sigset_t.h>
-#include <ctype.h>
 #include <stdio.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
+#include <ctype.h>
 #include <stdbool.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <signal.h>
+#include <unistd.h>
+#include <bits/types/sigset_t.h>
 
 #define LAMAIE "lamaie"
-
-void asteapta_verificare_traista(int sig) {
-    sigset_t signal_set;
-
-    sigemptyset(&signal_set);
-    sigaddset(&signal_set, sig);
-
-    sigwait(&signal_set, &sig);
-}
 
 void pe_alta_data(int sig) {
     printf("N-avem lamaie.\nLasam pestele pe alta data\n");
@@ -37,19 +28,19 @@ int main() {
         exit(1);
     }
 
+    int descriptor[2];
+    if(pipe(descriptor) < 0) {
+        fprintf(stderr, "Pipe creation error\n");
+        exit(0);
+    }
+
     if(pid_main == 0) { // child process
         int pid_child = fork();
-        char* rafie[4] = {"pastrav", "sare", "piper", "rozmarin"};
-        int descriptor[2];
 
-        if(pipe(descriptor) < 0) {
-            fprintf(stderr, "Pipe creation error\n");
-            exit(0);
-        }
-
-        if(pid_child == 0) { // child's child process
-            signal(SIGABRT, pe_alta_data);
+        if(pid_child == 0) { // grandchild process
+            char* rafie[4] = {"pastrav", "sare", "piper", "rozmarin"};
             signal(SIGUSR1, azi_mancam);
+            signal(SIGABRT, pe_alta_data);
             close(descriptor[0]);
 
             bool lamaie = false;
@@ -66,6 +57,7 @@ int main() {
             close(descriptor[1]);
 
             if(!lamaie) {
+                kill(getppid(), SIGKILL);
                 raise(SIGABRT);
             }
             else {
@@ -74,9 +66,11 @@ int main() {
         }
         else { //child process
             signal(SIGUSR1, azi_mancam);
-            asteapta_verificare_traista(SIGUSR1);
             close(descriptor[1]);
 
+            int status;
+            waitpid(pid_child, &status, 0);
+            
             char buffer[20];
             int bytes_read;
             while( (bytes_read = read(descriptor[0], buffer, sizeof(buffer))) > 0 ) {
@@ -88,11 +82,18 @@ int main() {
         }
     }
     else { // parent process
+        int status;
+        waitpid(pid_main, &status, 0);
+        close(descriptor[0]);
+        close(descriptor[1]);
+
         printf("parent process\n");
-        wait(NULL);
         wait(NULL);
     }
 
     // TODO: la final un execve(cowsay, "spor la cafelutsa cu peste") --- 
     return 0;
 }
+
+// for debug run in gdb
+// -exec set follow-fork-mode child
