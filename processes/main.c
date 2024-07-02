@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <stdbool.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -11,8 +10,12 @@
 
 #define LAMAIE "lamaie"
 
+#define PESTE()          { sleep(1); printf("Pestele se frige in tigaie\n"); }
+#define PROASPAT()       { PESTE(); PESTE(); }
+#define PESTE_PROASPAT() { PROASPAT(); PROASPAT(); }
+
 void pe_alta_data(int sig) {
-    printf("N-avem lamaie.\nLasam pestele pe alta data\n");
+    printf("N-avem lamaie.\n");
     exit(1);
 }
 
@@ -38,21 +41,28 @@ int main() {
         int pid_child = fork();
 
         if(pid_child == 0) { // grandchild process
-            char* rafie[4] = {"pastrav", "sare", "piper", "rozmarin"};
+            char* rafie[4] = {"pastrav", "sare", "piper", "lamaie"};
             signal(SIGUSR1, azi_mancam);
             signal(SIGABRT, pe_alta_data);
             close(descriptor[0]);
 
             bool lamaie = false;
             printf("Ia sa vedem ce avem in rafie:\n");
+
+            int data_in = 0;
+            char buffer[420];
             for(int i = 0; i < 4; i++) {
                 printf("%s\n", rafie[i]);
-                int data_in = sizeof(char) * (strnlen(rafie[i], 20) + 1);
-                write(descriptor[1], rafie[i], data_in);
+
+                strcpy(buffer + data_in, rafie[i]);
+                data_in += strnlen(rafie[i], 20) + 1;
+                buffer[data_in - 1] = ';';
+
                 if(!strncmp(rafie[i], LAMAIE, 6)) {
                     lamaie = true;
                 }
             }
+            write(descriptor[1], buffer, data_in);
             printf("\n");
             close(descriptor[1]);
 
@@ -70,12 +80,16 @@ int main() {
 
             int status;
             waitpid(pid_child, &status, 0);
+            printf("\n");
             
-            char buffer[20];
-            int bytes_read;
-            while( (bytes_read = read(descriptor[0], buffer, sizeof(buffer))) > 0 ) {
-                buffer[bytes_read] = '\0';
-                printf("Azvarlim in tigaie %s\n", buffer);
+            char buffer[420];
+            int bytes_read = read(descriptor[0], buffer, sizeof(buffer));
+            
+            char* token = strtok(buffer, ";");
+            while(token) {
+                printf("Azvarlim in tigaie %s\n", token);
+                sleep(1);
+                token = strtok(NULL, ";");
             }
 
             close(descriptor[0]);
@@ -84,16 +98,24 @@ int main() {
     else { // parent process
         int status;
         waitpid(pid_main, &status, 0);
+        if(WIFSIGNALED(status)) {
+            printf("Lasam pestele pe alta data\n");
+            exit(1);
+        }
+
         close(descriptor[0]);
         close(descriptor[1]);
+        printf("\n");
 
-        printf("parent process\n");
-        wait(NULL);
+        PESTE_PROASPAT();
+        printf("Intoarcem pestele pe partea cealalta\n");
+        PESTE_PROASPAT();
+
+        char* message[] = {"/usr/bin/cowsay", "Spor la cafelutsa cu peste", NULL};
+        execve("/usr/bin/cowsay", message, 0);
     }
 
-    // TODO: la final un execve(cowsay, "spor la cafelutsa cu peste") --- 
     return 0;
 }
-
 // for debug run in gdb
 // -exec set follow-fork-mode child
