@@ -1,6 +1,6 @@
 # Roadmap
-## 1. Processes
-- forks in bash?
+## 1. Processes -> DONE
+- forking in bash
 - processes in C
 - signals
 - handlers
