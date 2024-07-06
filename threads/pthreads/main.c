@@ -4,69 +4,64 @@
 #include <stdlib.h>
 #include <poll.h>
 #include <string.h>
+#include <unistd.h>
 
-pthread_mutex_t lock_a = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t lock_b = PTHREAD_MUTEX_INITIALIZER;
+#define COUNT_DONE  10
+#define COUNT_HALT1 3
+#define COUNT_HALT2 6
 
-int x = 0;
+int count = 0;
 
-void* lock_reader(void* mutex) {
-    int en;
-    int new_x = - 1,
-        old_x = -1;
-    pthread_mutex_t* p_mutex = (pthread_mutex_t *) mutex;
+pthread_mutex_t count_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t condition_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t condition_cond = PTHREAD_COND_INITIALIZER;
 
-    pthread_mutex_lock(p_mutex);
-
-    for(int i = 0; i < 100; i++) {
-        new_x = x;
-        if(new_x != old_x) {
-            printf("lock_reader(): new x val: %d\n", new_x);
+void* functionCount1() {
+    while(69) {
+        pthread_mutex_lock(&condition_mutex);
+        while(count >= COUNT_HALT1 && count <= COUNT_HALT2) {
+            pthread_cond_wait(&condition_cond, &condition_mutex);
         }
+        pthread_mutex_unlock(&condition_mutex);
 
-        old_x = new_x;
+        pthread_mutex_lock(&count_mutex);
+        count++;
+        printf("Counter value functionCount1: %d\n", count);
+        pthread_mutex_unlock(&count_mutex);
 
-        poll(NULL, 0, 1);
+        if(count >= COUNT_DONE) {
+            return NULL;
+        }
     }
-
-    pthread_mutex_unlock(p_mutex);
-
-    return NULL;
 }
 
-void* lock_writer(void* mutex) {
-    int en;
-    pthread_mutex_t* p_mutex = (pthread_mutex_t *) mutex;
+void* functionCount2() {
+    while(69) {
+        pthread_mutex_lock(&condition_mutex);
+        if(count < COUNT_HALT1 || count > COUNT_HALT2) {
+            pthread_cond_signal(&condition_cond);
+        }
+        pthread_mutex_unlock(&condition_mutex);
 
-    pthread_mutex_lock(p_mutex);
+        pthread_mutex_lock(&count_mutex);
+        count++;
+        printf("Counter value functionCount2: %d\n", count);
+        pthread_mutex_unlock(&count_mutex);
 
-    for(int i = 0; i < 3; i++) {
-        x++;
-        poll(NULL, 0, 5);
+        if(count >= COUNT_DONE) {
+            return NULL;
+        }
     }
-
-    pthread_mutex_unlock(p_mutex);
-
-    return NULL;
 }
 
 int main() {
     pthread_t thread1, thread2;
 
-    printf("Creating two threads using same lock:\n");
-    pthread_create(&thread1, NULL, lock_reader, &lock_a);
-    pthread_create(&thread2, NULL, lock_writer, &lock_a);
+    pthread_create(&thread1, NULL, functionCount1, NULL);
+    pthread_create(&thread2, NULL, functionCount2, NULL);
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);
-
-    printf("\nCreating two threads with different locks:\n");
-    pthread_create(&thread1, NULL, lock_reader, &lock_a);
-    pthread_create(&thread2, NULL, lock_writer, &lock_b);
-    pthread_join(thread1, NULL);
-    pthread_join(thread2, NULL);
-
-    pthread_mutex_destroy(&lock_a);
-    pthread_mutex_destroy(&lock_b);
+    
 
     return 0;
 }
