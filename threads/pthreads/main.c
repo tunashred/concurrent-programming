@@ -26,11 +26,15 @@ void* a_b_inc() {
 
 void* b_a_dec() {
     M_LOCK(&lock_b);
-    M_LOCK(&lock_a);
+    while(pthread_mutex_trylock(&lock_a)) {
+        M_UNLOCK(&lock_b);
+        sleep(1);
+        M_LOCK(&lock_b);
+    }
     a = b--;
     printf("b_a_dec(): a = %d, b = %d\n", a, b);
-    M_UNLOCK(&lock_a);
     M_UNLOCK(&lock_b);
+    M_UNLOCK(&lock_a);
 
     return NULL;
 }
