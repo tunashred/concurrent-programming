@@ -6,59 +6,40 @@
 #include <string.h>
 #include <unistd.h>
 
-#define COUNT_DONE  10
-#define COUNT_HALT1 3
-#define COUNT_HALT2 6
+#define M_LOCK(x) pthread_mutex_lock(x)
+#define M_UNLOCK(x) pthread_mutex_unlock(x)
 
-int count = 0;
+pthread_mutex_t lock_a = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t lock_b = PTHREAD_MUTEX_INITIALIZER;
+int a = 0, b = 0;
 
-pthread_mutex_t count_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t condition_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t condition_cond = PTHREAD_COND_INITIALIZER;
+void* a_b_inc() {
+    M_LOCK(&lock_a);
+    M_LOCK(&lock_b);
+    b = a++;
+    printf("a_b_inc(): a = %d, b = %d\n", a, b);
+    M_UNLOCK(&lock_b);
+    M_UNLOCK(&lock_a);
 
-void* functionCount1() {
-    while(69) {
-        pthread_mutex_lock(&condition_mutex);
-        while(count >= COUNT_HALT1 && count <= COUNT_HALT2) {
-            pthread_cond_wait(&condition_cond, &condition_mutex);
-        }
-        pthread_mutex_unlock(&condition_mutex);
-
-        pthread_mutex_lock(&count_mutex);
-        count++;
-        printf("Counter value functionCount1: %d\n", count);
-        pthread_mutex_unlock(&count_mutex);
-
-        if(count >= COUNT_DONE) {
-            return NULL;
-        }
-    }
+    return NULL;
 }
 
-void* functionCount2() {
-    while(69) {
-        pthread_mutex_lock(&condition_mutex);
-        if(count < COUNT_HALT1 || count > COUNT_HALT2) {
-            pthread_cond_signal(&condition_cond);
-        }
-        pthread_mutex_unlock(&condition_mutex);
+void* b_a_dec() {
+    M_LOCK(&lock_b);
+    M_LOCK(&lock_a);
+    a = b--;
+    printf("b_a_dec(): a = %d, b = %d\n", a, b);
+    M_UNLOCK(&lock_a);
+    M_UNLOCK(&lock_b);
 
-        pthread_mutex_lock(&count_mutex);
-        count++;
-        printf("Counter value functionCount2: %d\n", count);
-        pthread_mutex_unlock(&count_mutex);
-
-        if(count >= COUNT_DONE) {
-            return NULL;
-        }
-    }
+    return NULL;
 }
 
 int main() {
     pthread_t thread1, thread2;
 
-    pthread_create(&thread1, NULL, functionCount1, NULL);
-    pthread_create(&thread2, NULL, functionCount2, NULL);
+    pthread_create(&thread1, NULL, a_b_inc, NULL);
+    pthread_create(&thread2, NULL, b_a_dec, NULL);
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);
     
