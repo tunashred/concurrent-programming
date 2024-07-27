@@ -18,13 +18,15 @@
 - critical regions
 - reentrant locks
 - barriers
+- watchdog thread
 -
 
 ## 4. Data structures and algorithms for parallelism
 - thread pools
 - executors
 - map-reduce
--
+- Banker's algorithm
+- 
 
 <br><br>
 ***List subject of change***
