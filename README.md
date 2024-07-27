@@ -17,6 +17,7 @@
 - semaphores
 - critical regions
 - reentrant locks
+- barriers
 -
 
 ## 4. Data structures and algorithms for parallelism
