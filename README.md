@@ -14,9 +14,10 @@
 
 ## 3. Concurrency control elements
 - mutex, futex
-- semaphores
 - critical regions
+- priority protocols
 - reentrant locks
+- semaphores
 - barriers
 - watchdog thread
 -
