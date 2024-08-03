@@ -1,76 +1,54 @@
-#include <pthread.h>
-#include <bits/pthreadtypes.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <poll.h>
 #include <string.h>
 #include <unistd.h>
+#include <pthread.h>
+#include <bits/pthreadtypes.h>
+#include <poll.h>
+#include <time.h>
 
-#define MAX_SLEEP 10
-#define MAX_THREADS 2
+#define lock_mutex(x) do { pthread_mutex_lock(x); lock_count++; } while (0)
+#define unlock_mutex(x) do { pthread_mutex_unlock(x); lock_count--; } while (0)
 
-pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t mutex2 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex;
+static int x = 0;
+__thread int lock_count = 0;
 
-void* callback1(void* arg) {
-    int random_time;
-    while(69) {
-        srand(time(NULL));
-        random_time = rand() % MAX_SLEEP;
-        printf("[%s]: Sleeping for %d seconds\n", __FUNCTION__, random_time);
-        sleep(random_time);
-        printf("[%s]: Trying to acquire mutex1 (holding none)\n", __FUNCTION__);
-        pthread_mutex_lock(&mutex1);
-        printf("[%s]: Acquired mutex1\n", __FUNCTION__);
-
-        random_time = rand() % MAX_SLEEP;
-        printf("[%s]: Sleeping for %d seconds\n", __FUNCTION__, random_time);
-        sleep(random_time);
-
-        printf("[%s]: Trying to acquire mutex2 (holding mutex1)\n", __FUNCTION__);
-        pthread_mutex_lock(&mutex2);
-        printf("[%s]: Acquired mutex2\n\n", __FUNCTION__);
-
-        pthread_mutex_unlock(&mutex2);
-        pthread_mutex_unlock(&mutex1);
-    }
-    return NULL;
+void mutex_init(pthread_mutex_t* mutex, int kind) {
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, kind);
+    pthread_mutex_init(mutex, &attr);
+    pthread_mutexattr_destroy(&attr);
 }
 
-void* callback2(void* arg) {
-    int random_time;
-    while(69) {
-        srand(time(NULL));
-        random_time = rand() % MAX_SLEEP;
-        printf("[%s]: Sleeping for %d seconds\n", __FUNCTION__, random_time);
-        sleep(random_time);
-        printf("[%s]: Trying to acquire mutex2 (holding none)\n", __FUNCTION__);
-        pthread_mutex_lock(&mutex2);
-        printf("[%s]: Acquired mutex2\n", __FUNCTION__);
-
-        random_time = rand() % MAX_SLEEP;
-        printf("[%s]: Sleeping for %d seconds\n", __FUNCTION__, random_time);
-        sleep(random_time);
-
-        printf("[%s]: Trying to acquire mutex1 (holding mutex2)\n", __FUNCTION__);
-        pthread_mutex_lock(&mutex1);
-        printf("[%s]: Acquired mutex1\n\n", __FUNCTION__);
-
-        pthread_mutex_unlock(&mutex1);
-        pthread_mutex_unlock(&mutex2);
+void* counter() {
+    int i = 0;
+    for(i = 0; i < 5; i++) {
+        lock_mutex(&mutex);
     }
+    printf("Number of max recursive locks: %d\n", lock_count);
+    x++;
+    sleep(3);
+    for(i = 0; i < 5; i++) {
+        printf("Number of recursive locks: %d\n", lock_count);
+        unlock_mutex(&mutex);
+    }
+
     return NULL;
 }
 
 int main() {
-    pthread_t thread[MAX_THREADS];
+    pthread_t thread1, thread2;
 
-    pthread_create(&thread[0], NULL, callback1, NULL);
-    pthread_create(&thread[1], NULL, callback2, NULL);
-    
-    for(int i = 0; i < MAX_THREADS; i++) {
-        pthread_join(thread[i], NULL);
-    }
+    mutex_init(&mutex, PTHREAD_MUTEX_RECURSIVE);
+
+    pthread_create(&thread1, NULL, counter, NULL);
+    pthread_create(&thread2, NULL, counter, NULL);
+    pthread_join(thread1, NULL);
+    pthread_join(thread2, NULL);
+
+    pthread_mutex_destroy(&mutex);
 
     return 0;
 }
