@@ -18,6 +18,7 @@
 - priority protocols
 - reentrant locks
 - semaphores
+- monitors
 - barriers
 - watchdog thread
 -
