@@ -6,49 +6,43 @@
 #include <bits/pthreadtypes.h>
 #include <poll.h>
 #include <time.h>
+#include <semaphore.h>
+#include <errno.h>
 
-#define lock_mutex(x) do { pthread_mutex_lock(x); lock_count++; } while (0)
-#define unlock_mutex(x) do { pthread_mutex_unlock(x); lock_count--; } while (0)
+#define MAX_CONCURRENT_THREADS 2
+sem_t semaphore;
 
-pthread_mutex_t mutex;
-static int x = 0;
-__thread int lock_count = 0;
+char* buffer[] = {"john", "carmack", "jonathan", "blow", "jim", "keller"};
 
-void mutex_init(pthread_mutex_t* mutex, int kind) {
-    pthread_mutexattr_t attr;
-    pthread_mutexattr_init(&attr);
-    pthread_mutexattr_settype(&attr, kind);
-    pthread_mutex_init(mutex, &attr);
-    pthread_mutexattr_destroy(&attr);
+void* read_buffer() {
+    sem_wait(&semaphore);
+    printf("%s %s\n", buffer[0], buffer[1]);
+    sleep(2);
+    sem_post(&semaphore);
+    return NULL;
 }
 
-void* counter() {
-    int i = 0;
-    for(i = 0; i < 5; i++) {
-        lock_mutex(&mutex);
-    }
-    printf("Number of max recursive locks: %d\n", lock_count);
-    x++;
-    sleep(3);
-    for(i = 0; i < 5; i++) {
-        printf("Number of recursive locks: %d\n", lock_count);
-        unlock_mutex(&mutex);
-    }
-
+void* write_buffer() {
+    sem_wait(&semaphore);
+    buffer[0] = "69\0";
+    sem_post(&semaphore);
     return NULL;
 }
 
 int main() {
-    pthread_t thread1, thread2;
+    sem_init(&semaphore, 0, MAX_CONCURRENT_THREADS);
+    pthread_t reader1, reader2, writer;
+    
+    //TODO: lookup pthread_attr_t
+    pthread_create(&reader1, NULL, read_buffer, NULL);
+    pthread_create(&reader2, NULL, read_buffer, NULL);
+    pthread_create(&writer, NULL, write_buffer, NULL);
 
-    mutex_init(&mutex, PTHREAD_MUTEX_RECURSIVE);
+    pthread_join(reader1, NULL);
+    pthread_join(reader2, NULL);
+    pthread_join(writer, NULL);
 
-    pthread_create(&thread1, NULL, counter, NULL);
-    pthread_create(&thread2, NULL, counter, NULL);
-    pthread_join(thread1, NULL);
-    pthread_join(thread2, NULL);
-
-    pthread_mutex_destroy(&mutex);
+    printf("%s\n", buffer[0]);
 
     return 0;
 }
