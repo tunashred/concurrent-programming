@@ -14,20 +14,32 @@
 
 ## 3. Concurrency control elements
 - mutex, futex
-- critical regions
-- priority protocols
 - reentrant locks
+- reader-writer locks
+- sequence locks
+- adaptive locks
 - semaphores
 - monitors
 - barriers
-- watchdog thread
--
+- latches
+- atomic operations
+- fences
+- read-copy-update
+- message passing
+- 
 
 ## 4. Data structures and algorithms for parallelism
-- thread pools
 - executors
+- thread pools
+- watchdog thread
 - map-reduce
 - Banker's algorithm
+- 
+
+## 5. Scheduling
+- priority protocols
+- priority inversion
+- scheduling algorithms
 - 
 
 <br><br>
