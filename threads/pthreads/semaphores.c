@@ -17,8 +17,13 @@ char* buffer[] = {"john", "carmack", "jonathan", "blow", "jim", "keller"};
 void* read_buffer() {
     sem_wait(&semaphore);
     printf("%s %s\n", buffer[0], buffer[1]);
-    sleep(2);
     sem_post(&semaphore);
+    sleep(2);
+
+    sem_wait(&semaphore);
+    printf("%s %s\n", buffer[0], buffer[1]);
+    sem_post(&semaphore);
+
     return NULL;
 }
 
@@ -33,7 +38,6 @@ int main() {
     sem_init(&semaphore, 0, MAX_CONCURRENT_THREADS);
     pthread_t reader1, reader2, writer;
     
-    //TODO: lookup pthread_attr_t
     pthread_create(&reader1, NULL, read_buffer, NULL);
     pthread_create(&reader2, NULL, read_buffer, NULL);
     pthread_create(&writer, NULL, write_buffer, NULL);
@@ -41,8 +45,6 @@ int main() {
     pthread_join(reader1, NULL);
     pthread_join(reader2, NULL);
     pthread_join(writer, NULL);
-
-    printf("%s\n", buffer[0]);
 
     sem_destroy(&semaphore);
 
