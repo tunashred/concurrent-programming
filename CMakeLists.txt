@@ -1,10 +1,68 @@
 cmake_minimum_required(VERSION 3.0.0)
+
+# Project name and version
 project(concurrent-programming VERSION 0.1.0 LANGUAGES C)
 
-add_compile_options(-Wall -Wextra -pthread)
-# add_compile_options(-fsanitize=address)
-
+# Set source file
 set(SOURCE_FILE threads/pthreads/main.c)
+
+# Add executable target
 add_executable(concurrent-programming ${SOURCE_FILE})
 
+# Set sanitizer type
+set(SANITIZER "-fsanitize=thread")
 
+# Compile flags for any build type
+add_compile_options(
+    -Wall
+    -Wextra
+    -pthread
+    -D_FORTIFY_SOURCE=2
+    -Wshadow
+    -Wcast-align
+    -Wwrite-strings
+    -Wcast-qual
+    -Wconversion
+    ${SANITIZER}
+)
+
+# Sanitizer option needed at linking stage
+target_link_options(concurrent-programming PRIVATE ${SANITIZER})
+
+# Extra compile flags for debug build
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_compile_options(
+        -O3
+    )
+elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_compile_options(
+        -g
+        -O0
+        -fverbose-asm
+        -finstrument-functions
+        )
+endif()
+
+##################################################################
+# Commentary on compile flags
+#
+# Common flags
+# -Wall: Enable all warnings
+# -pthread: Enable pthread support
+# -D_FORTIFY_SOURCE=2: Runtime buffer overflow detection
+# -Wshadow: Warns if a local variable shadows a function parameter or global variable or when a lib function is shadowed
+# -Wpointer-arith: Warns about questionable pointer operations or pointer arithmetic with void* type or function pointers
+# -Wcast-align: Warns for potentially unsafe pointer casts related to strict pointer alignment
+# -Wwrite-strings: Warns if a string literal is assigned to a char*
+# -Wcast-qual: Warns when casting removes type qualifiers such as const or volatile
+# -Wconversion: Warns about implicit type conversions that can lead to data loss
+# -Wunreachable-code: Detects code that will never be executed
+#
+# Debug flags
+# -g: Include debug info
+# -O0: No optimizations
+# -fverbose-asm: puts Extra comments to generated assembly code to make it more readable
+# -finstrument-functions: Inserts hooks for each function in the program
+#
+# Sanitizers:
+# ${SANITIZER}: Applied sanitizer (address, thread, undefined)
