@@ -40,7 +40,8 @@
 - priority protocols
 - priority inversion
 - scheduling algorithms
-- 
+- cron jobs
+-
 
 <br><br>
 ***List subject of change***
