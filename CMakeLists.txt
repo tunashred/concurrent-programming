@@ -6,8 +6,11 @@ project(concurrent-programming VERSION 0.1.0 LANGUAGES C)
 # Set source file
 set(SOURCE_FILE threads/pthreads/main.c)
 
+# Set executable name
+set(EXECUTABLE "concurrent-programming")
+
 # Add executable target
-add_executable(concurrent-programming ${SOURCE_FILE})
+add_executable(${EXECUTABLE} ${SOURCE_FILE})
 
 # Set sanitizer type
 set(SANITIZER "-fsanitize=thread")
@@ -29,18 +32,34 @@ add_compile_options(
 # Sanitizer option needed at linking stage
 target_link_options(concurrent-programming PRIVATE ${SANITIZER})
 
-# Extra compile flags for debug build
+# Release specific flags
+set(RELEASE_FLAGS
+    -O3    
+)
+
+# Debug specific flags
+set(DEBUG_FLAGS
+    -g
+    -O0
+    -fverbose-asm
+    -finstrument-functions
+)
+
+# Extra compile flags for release build
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_compile_options(
-        -O3
+        ${RELEASE_FLAGS}
     )
+# Extra compile flags for debug build
 elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_compile_options(
-        -g
-        -O0
-        -fverbose-asm
-        -finstrument-functions
-        )
+    add_compile_options(${DEBUG_FLAGS})
+
+    # Generate assembly file
+    add_custom_command(
+        TARGET ${EXECUTABLE} POST_BUILD
+        COMMAND ${CMAKE_C_COMPILER} ${DEBUG_FLAGS} -S ${CMAKE_SOURCE_DIR}/${SOURCE_FILE} -o ${CMAKE_CURRENT_BINARY_DIR}/assembly.s
+        COMMENT "Generating assembly file assembly.s"
+    )
 endif()
 
 ##################################################################
@@ -50,7 +69,7 @@ endif()
 # -Wall: Enable all warnings
 # -pthread: Enable pthread support
 # -D_FORTIFY_SOURCE=2: Runtime buffer overflow detection
-# -Wshadow: Warns if a local variable shadows a function parameter or global variable or when a lib function is shadowed
+# -Wshadow: Warns if a local variable shadows a function parameter or global variable, or when a lib function is shadowed
 # -Wpointer-arith: Warns about questionable pointer operations or pointer arithmetic with void* type or function pointers
 # -Wcast-align: Warns for potentially unsafe pointer casts related to strict pointer alignment
 # -Wwrite-strings: Warns if a string literal is assigned to a char*
@@ -61,7 +80,7 @@ endif()
 # Debug flags
 # -g: Include debug info
 # -O0: No optimizations
-# -fverbose-asm: puts Extra comments to generated assembly code to make it more readable
+# -fverbose-asm: Puts extra comments to generated assembly code to make it more readable
 # -finstrument-functions: Inserts hooks for each function in the program
 #
 # Sanitizers:
