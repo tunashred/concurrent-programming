@@ -43,6 +43,7 @@ set(DEBUG_FLAGS
     -O0
     -fverbose-asm
     -finstrument-functions
+    -fanalyzer
 )
 
 # Extra compile flags for release build
@@ -77,11 +78,15 @@ endif()
 # -Wconversion: Warns about implicit type conversions that can lead to data loss
 # -Wunreachable-code: Detects code that will never be executed
 #
+# Release flags
+# -O3: Max optimization level
+#
 # Debug flags
 # -g: Include debug info
 # -O0: No optimizations
 # -fverbose-asm: Puts extra comments to generated assembly code to make it more readable
 # -finstrument-functions: Inserts hooks for each function in the program
+# -fanalyzer: Static analyser at compile time
 #
 # Sanitizers:
-# ${SANITIZER}: Applied sanitizer (address, thread, undefined)
+# ${SANITIZER}: Applied sanitizer (address, thread, undefined). Needs to be manually changed because only one sanitizer can be used in a build.
