@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.0.0)
 
+# Set C standard
+set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+
 # Project name and version
 project(concurrent-programming VERSION 0.1.0 LANGUAGES C)
 
@@ -34,7 +38,7 @@ target_link_options(concurrent-programming PRIVATE ${SANITIZER})
 
 # Release specific flags
 set(RELEASE_FLAGS
-    -O3    
+    -O3
 )
 
 # Debug specific flags
