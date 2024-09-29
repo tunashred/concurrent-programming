@@ -1,17 +1,19 @@
 #ifndef THREAD_POOL_H
 #define THREAD_POOL_H
 
-#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <stddef.h>
+#include <stdbool.h>
 #include <pthread.h>
 
 typedef void(*thread_func_t)(void* args);
 
-typedef struct {
+struct tpool_work_t {
     thread_func_t func;
     void* args;
     struct tpool_work_t* next;
-} tpool_work_t;
+} typedef tpool_work_t;
 
 typedef struct {
     tpool_work_t* work_first;
@@ -24,12 +26,20 @@ typedef struct {
     bool stop;
 } tpool_t;
 
-tpool_t* tpool_init(size_t num);
+tpool_work_t* tpool_work_create(thread_func_t func, void* args);
 
-void tpool_destroy(tpool_t* tpool);
+bool tpool_work_add(tpool_t* tpool, thread_func_t func, void* args);
 
-bool tpool_add_work(tpool_t* tpool, thread_func_t func, void* args);
+tpool_work_t* tpool_work_pull(tpool_t* tpool);
+
+void tpool_work_destroy(tpool_work_t* work);
+
+void* tpool_worker(void* args);
+
+tpool_t* tpool_init(size_t thread_count);
 
 void tpool_wait(tpool_t* tpool);
+
+void tpool_destroy(tpool_t* tpool);
 
 #endif
