@@ -3,7 +3,6 @@
 void moo_test(void* args) {
     size_t num = (size_t) args;
     size_t big_num = 1 << 25;
-    printf("im in the function\n");
     for(size_t i = 0; i < num; i++) {
         big_num -= i;
     }
