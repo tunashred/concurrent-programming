@@ -68,7 +68,7 @@ void tpool_work_destroy(tpool_work_t* work) {
 void* tpool_worker(void* args) {
     tpool_t* tpool = (tpool_t*) args;
     tpool_work_t* work = NULL;
-    while(69) {
+    while(1) {
         pthread_mutex_lock(&tpool->work_mutex);
         
         while(!tpool->work_first && !tpool->stop) {
